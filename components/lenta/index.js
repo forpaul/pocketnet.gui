@@ -630,8 +630,6 @@ var lenta = (function(){
 						volumeChange : function(v){
 							videosVolume = v
 
-							console.log('v', v)
-
 							self.sdk.videos.volume = videosVolume 
 
 							self.sdk.videos.save()
@@ -853,8 +851,6 @@ var lenta = (function(){
 
 				var wh = el.find('.videoWrapper').height() + add;
 
-				console.log("WH", wh)
-
 				var d = (h - wh) / 2
 
 				if (d > 0){
@@ -934,8 +930,6 @@ var lenta = (function(){
 					}
 
 					//player.p.muted = false
-
-					console.log('videosVolume12', videosVolume)
 
 					actions.setVolume(players[id], videosVolume || 0.5)
 					
@@ -1189,8 +1183,7 @@ var lenta = (function(){
 						if (image.src == initialValue) return true;						
 	
 					})
-	
-					if(images.length > 1 || (share.url && images.length && parseVideo(share.url).type) || !isMobile()){
+					if(images.length >= 1 || (share.url && images.length && parseVideo(share.url).type) || !isMobile()){
 	
 						self.app.nav.api.load({
 							open : true,
@@ -1324,7 +1317,7 @@ var lenta = (function(){
 											action(player, vel)
 										}
 
-									}, 320)
+									}, 520)
 
 									
 
@@ -1448,7 +1441,7 @@ var lenta = (function(){
 
 				const metaInfo = self.app.platform.parseUrl(share.url);
 
-				const peertubeLink = `https://`+self.app.options.url+`/embedVideo.php?host=${metaInfo.host_name}&id=${metaInfo.id}&embed=true&sLink=${share.txid}`;
+				const peertubeLink = `https://`+self.app.options.url+`/embedVideo.php?host=${metaInfo.host_name}&id=${metaInfo.id}&embed=true&s=${share.txid}`;
 
 				(metaInfo.type === 'peertube') ? copycleartext(peertubeLink) : copycleartext(share.url);
 
@@ -1569,12 +1562,7 @@ var lenta = (function(){
 
 					if(!el.closest('.share').hasClass('showAdditional')){
 
-
-						console.log("PLAY")
-
-						actions.initVideo(_el, share = self.app.platform.sdk.node.shares.storage.trx[_el.attr('id')], function(){
-
-							console.log("PLAY2")
+						actions.initVideo(_el, self.app.platform.sdk.node.shares.storage.trx[_el.attr('id')], function(){
 
 							if(player.p.getState && player.p.getState() == 'ended') return
 
@@ -2116,8 +2104,6 @@ var lenta = (function(){
 							//caption : rendered,
 							send : function(comment, last){
 
-								console.log('comment', comment)
-
 								var c = el.c.find('#' + txid + " .commentsAction .count span");
 
 								c.html(Number(c.html() || "0") + 1)
@@ -2237,9 +2223,15 @@ var lenta = (function(){
 			},
 			share : function(share, clbk, all){
 
-				var _el = el.shares.find("#" + share.txid);
+				if(!share) return
+
+				var _el = el.share[share.txid] //el.shares.find("#" + share.txid);
+
+				//if(!_el) return
 
 				shareheights[share.txid] = 0;
+
+				
 				
 				if (_el[0])
 					shareheights[share.txid] = _el[0].offsetHeight
@@ -2285,9 +2277,10 @@ var lenta = (function(){
 								p.el.find('.canmark').mark(essenseData.searchValue);
 
 							}
+							
 
 							if(!video)
-								actions.initVideo(p.el, share, null, true)
+								actions.initVideo(p.el, share, null, !essenseData.openapi)
 
 
 							if(isotopeinited) el.shares.isotope()
@@ -2462,22 +2455,14 @@ var lenta = (function(){
 				if(!p.inner) {
 					p.inner = function(el, html){
 
-
 						if(isotopeinited){
-
 							var content = $(html)
 
-
 							el.append( content ).isotope( 'appended', content )
-
 						}
 						else
-
 						return append(el, html)
 					}
-
-
-
 				}
 
 				var tpl = 'groupshares';
@@ -2501,8 +2486,6 @@ var lenta = (function(){
 						})
 					})
 					
-
-				
 				
 				self.shell({
 					name :  tpl,
@@ -2540,7 +2523,7 @@ var lenta = (function(){
 					_.each(shares, function(s){
 						el.share[s.txid] = el.c.find('#' + s.txid)
 					})
-					
+
 					if (essenseData.renderclbk)
 						essenseData.renderclbk()
 
@@ -2629,13 +2612,9 @@ var lenta = (function(){
 
 				}
 
-				console.log('_el', _el)
-
 				window.requestAnimationFrame(function(){
 
 					_el.imagesLoaded({ background: true }, function(image) {
-
-						console.log("IMAGES LOADED", image)
 
 						if(s.settings.v != "a"){
 
@@ -2645,8 +2624,6 @@ var lenta = (function(){
 
 								var el = $(image.elements[n]).closest('.imagesWrapper');
 								var ac = '';
-
-								console.log('window.innerWidth', window.innerWidth)
 
 								var _w = el.width();
 								var _h = el.height()
@@ -3080,7 +3057,7 @@ var lenta = (function(){
 
 						if(!error && !error2){
 
-							if(!shares || !shares.length || ((shares.length < pr.count) || recommended == 'recommended')){							
+							if(!shares || !shares.length || ((shares.length < pr.count) || recommended == 'recommended')){								
 
 								if(!beginmaterial && !countshares){
 									el.c.addClass("sharesZero")
@@ -3088,7 +3065,7 @@ var lenta = (function(){
 								else
 								{
 		
-									if ( (shares.length < pr.count || recommended == 'recommended') && (recommended || author || essenseData.search || essenseData.tags) ){
+									if ( !essenseData.txids && (shares.length < pr.count || recommended == 'recommended') && (recommended || author || essenseData.search || essenseData.tags) ){
 		
 										setTimeout(function(){
 											if (el.c)
@@ -3100,7 +3077,7 @@ var lenta = (function(){
 								}
 
 								////// SHIT
-								if (!shares.length || shares.length < pr.count && (recommended || author || essenseData.search)){
+								if ((!shares.length || shares.length < pr.count) && (recommended || author || essenseData.search)){
 
 									if(essenseData.ended) {
 										ended = essenseData.ended(shares)
@@ -3210,6 +3187,8 @@ var lenta = (function(){
 
 							if (recommended){
 
+								
+
 								if(recommended == 'recommended'){
 									loader = 'recommended'
 								}
@@ -3253,7 +3232,6 @@ var lenta = (function(){
 							if (essenseData.tags) tagsfilter = essenseData.tags
 
 							var page = essenseData.page || parameters().page || 0
-
 
 							self.app.platform.sdk.node.shares[loader]({
 
@@ -3369,7 +3347,11 @@ var lenta = (function(){
 
 		var initEvents = function(){			
 
+			
+
 			if(isMobile() && canloadprev && !essenseData.openapi){
+
+				
 
 				/*var cc = el.c.find('.circularprogress');
 				var maxheight = 220;
@@ -3751,6 +3733,9 @@ var lenta = (function(){
 					addressEl.removeClass('blocking');
 				}
 
+
+			
+
 			}	
 			
 		}
@@ -3767,8 +3752,6 @@ var lenta = (function(){
 			if (essenseData.goback) {
 				cache = 'cache'
 			}
-
-			
 
 			if (essenseData.contents){
 
@@ -3790,8 +3773,6 @@ var lenta = (function(){
 					actions.opensvi(p.v)
 				}
 			}
-
-			
 
 
 			load.shares(function(shares, error){
@@ -3817,7 +3798,6 @@ var lenta = (function(){
 				}
 				else
 				{
-
 					
 
 					if (clear)
@@ -3893,7 +3873,6 @@ var lenta = (function(){
 							}
 
 							if(essenseData.notscrollloading && essenseData.txids){
-
 								renders.txidall(essenseData.txids)
 							}
 						
@@ -4028,6 +4007,10 @@ var lenta = (function(){
 
 			destroy : function(){
 
+				/*if (essenseData.window){
+					essenseData.window.off('scroll')
+				}*/
+
 				if (el.shares && isotopeinited){
 					el.shares.isotope('destroy')
 					
@@ -4120,7 +4103,7 @@ var lenta = (function(){
 			},
 			
 			init : function(p){
-				
+
 				w = $(window)
 
 				state.load();
